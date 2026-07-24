@@ -4,6 +4,31 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>Videoclipes - Portfolio</title>
+    <script>
+    (function () {
+      if (window.location.protocol === 'file:') return;
+
+      var prettyByPage = {
+        'index.html': 'home',
+        'publicidade.html': 'commercials',
+        'videoclipes.html': 'music',
+        'ficcao.html': 'narrative',
+        'sobre.html': 'about'
+      };
+
+      var normalizedPath = window.location.pathname.replace(/\/+$/, '');
+      var parts = normalizedPath.split('/');
+      var last = String(parts.pop() || '').toLowerCase();
+      var pretty = prettyByPage[last];
+      if (!pretty) return;
+
+      var base = (parts.join('/') + '/').replace(/\/+/g, '/');
+      var targetPath = (base + pretty).replace(/\/+/g, '/');
+      if (targetPath === window.location.pathname) return;
+
+      window.history.replaceState({}, '', targetPath + window.location.search + window.location.hash);
+    })();
+    </script>
     <link rel="preload" href="assets/fundo/FUNDO_V2.png" as="image" fetchpriority="high">
     <link rel="stylesheet" href="style.css">
 </head>
