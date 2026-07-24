@@ -31,8 +31,15 @@
     const ua = navigator.userAgent;
     const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/.test(ua);
     const isMobileLikeViewport = () => window.matchMedia('(max-width: 1080px), (max-aspect-ratio: 1 / 1), (pointer: coarse)').matches;
+    const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
+    const isConstrainedNetwork = Boolean(
+        networkInfo && (networkInfo.saveData || /(^|-)2g/.test(String(networkInfo.effectiveType || '')))
+    );
     if (isSafari) {
         body.classList.add('safari-browser');
+    }
+    if (isConstrainedNetwork) {
+        body.classList.add('low-bandwidth');
     }
     const isPostTransitionLoad = window.sessionStorage.getItem(PAGE_TRANSITION_STORAGE_KEY) === '1';
 
@@ -90,6 +97,7 @@
             if (video.classList.contains('hidden-video')) return;
             if (video.dataset.autoplayManaged === '0') return;
             if (body.classList.contains('transition-hold-videos')) return;
+            if (isConstrainedNetwork && video.dataset.allowConstrainedPlay !== '1') return;
             video.play().catch(() => {});
         };
 
@@ -189,6 +197,15 @@
                 return;
             }
 
+            if (isConstrainedNetwork) {
+                video.preload = isPriority ? 'metadata' : 'none';
+                if (isPriority) {
+                    video.dataset.allowConstrainedPlay = '1';
+                    safePlay(video);
+                }
+                return;
+            }
+
             if (isPostTransitionLoad) {
                 video.preload = 'auto';
                 if (typeof resumeSeconds === 'number' && Number.isFinite(resumeSeconds) && resumeSeconds > 0.05) {
@@ -230,6 +247,9 @@
                             if (video.preload === 'none') {
                                 video.preload = 'metadata';
                             }
+                            if (isConstrainedNetwork && entry.intersectionRatio > 0.72) {
+                                video.dataset.allowConstrainedPlay = '1';
+                            }
                             safePlay(video);
                         } else {
                             video.pause();
@@ -238,7 +258,7 @@
                 },
                 {
                     root: null,
-                    rootMargin: '340px 0px',
+                    rootMargin: isConstrainedNetwork ? '80px 0px' : '220px 0px',
                     threshold: 0.01
                 }
             );
@@ -246,7 +266,8 @@
 
         videos.forEach((video, index) => {
             const inViewportNow = isElementInViewport(video, 0.08);
-            const isPriority = inViewportNow || index < 4 || Boolean(video.closest('.home-piece')) || isPostTransitionLoad;
+            const eagerCount = isConstrainedNetwork ? 1 : 2;
+            const isPriority = isPostTransitionLoad ? inViewportNow : (inViewportNow || index < eagerCount);
             prepareVideo(video, isPriority);
 
             if (observer) {
@@ -466,11 +487,6 @@
 
     const navigateWithTransition = (url) => {
         if (hasNavigationStarted) return;
-
-        if (isMobileLikeViewport()) {
-            window.location.href = url.href;
-            return;
-        }
 
         hasNavigationStarted = true;
         body.classList.add('transition-hold-videos');
@@ -810,11 +826,6 @@
         if (!clickable) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
 
-        // On mobile, keep native anchor navigation to avoid touch/click race conditions in Safari.
-        if (clickable.matches('a') && isMobileLikeViewport()) {
-            return;
-        }
-
         let url = null;
         if (clickable.matches('a')) {
             if (!isEligibleLink(clickable)) return;
@@ -831,6 +842,27 @@
         event.preventDefault();
         navigateWithTransition(url);
     });
+
+    document.addEventListener('touchend', (event) => {
+        if (!isMobileLikeViewport()) return;
+
+        const anchor = event.target.closest('header nav a[href]');
+        if (!anchor) return;
+        if (!isEligibleLink(anchor)) return;
+
+        let url;
+        try {
+            url = new URL(anchor.href, window.location.href);
+        } catch {
+            return;
+        }
+
+        if (url.origin !== window.location.origin) return;
+        if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+
+        event.preventDefault();
+        navigateWithTransition(url);
+    }, { passive: false });
 
     document.addEventListener('keydown', (event) => {
         const clickable = event.target.closest('.home-piece[data-href]');

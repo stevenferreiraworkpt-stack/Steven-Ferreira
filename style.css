@@ -30,6 +30,7 @@ html {
 
 body {
     font-family: 'Circular', sans-serif;
+    background-color: #8d4315;
     background-image: url('assets/fundo/FUNDO_V2.png');
     background-repeat: repeat-y;
     background-position: center top;
@@ -958,10 +959,12 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
     .logo {
         display: flex;
         justify-content: center;
+        width: 100%;
     }
 
     .logo img {
         width: min(300px, 72vw);
+        margin: 0 auto;
     }
 
     nav {
@@ -969,6 +972,7 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
         gap: clamp(18px, 4.2vw, 34px);
         justify-content: center;
         flex-wrap: wrap;
+        margin: 0 auto;
     }
 
     nav a {
@@ -986,6 +990,7 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
 
     .grid:not(.vertical-grid) {
         grid-template-columns: 1fr;
+        justify-items: center;
     }
 
     .item {
@@ -1024,6 +1029,8 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
         grid-auto-rows: auto;
         gap: 12px;
         aspect-ratio: auto;
+        margin: 0 auto;
+        width: min(95vw, 980px);
     }
 
     .home-piece {
@@ -1032,6 +1039,7 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
         top: auto;
         width: 100%;
         height: auto;
+        margin: 0 auto;
     }
 
     .home-piece img {
@@ -1064,11 +1072,12 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
     .home-piece--b { order: 9; grid-column: 1 / -1; grid-row: 6; aspect-ratio: 795 / 203; }
 
     .about-mosaic {
-        width: min(100%, 980px);
+        width: min(95vw, 980px);
         grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: repeat(7, auto);
         aspect-ratio: auto;
         gap: 14px;
+        margin: 0 auto;
     }
 
     .about-tile--1,
