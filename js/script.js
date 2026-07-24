@@ -14,6 +14,12 @@
 
     const body = document.body;
     if (!body) return;
+    const ua = navigator.userAgent;
+    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/.test(ua);
+    const isMobileLikeViewport = () => window.matchMedia('(max-width: 1080px), (max-aspect-ratio: 1 / 1), (pointer: coarse)').matches;
+    if (isSafari) {
+        body.classList.add('safari-browser');
+    }
     const isPostTransitionLoad = window.sessionStorage.getItem(PAGE_TRANSITION_STORAGE_KEY) === '1';
 
     const isElementInViewport = (element, threshold = 0.12) => {
@@ -30,6 +36,8 @@
     const initMediaPerformanceOptimizations = () => {
         const videos = Array.from(document.querySelectorAll('video'));
         const images = Array.from(document.querySelectorAll('img'));
+        const safariRevealLockActive = isSafari;
+        const safariRevealReleasers = [];
         let resumeMap = null;
 
         try {
@@ -59,6 +67,10 @@
         });
 
         if (!videos.length) return;
+
+        if (safariRevealLockActive) {
+            body.classList.add('safari-reveal-lock');
+        }
 
         const safePlay = (video) => {
             if (video.classList.contains('hidden-video')) return;
@@ -91,13 +103,23 @@
             }
 
             let hasMarkedReady = false;
-            const markReady = () => {
+            const applyReady = () => {
                 if (hasMarkedReady) return;
                 hasMarkedReady = true;
                 video.classList.add('is-ready');
                 if (host && host.nodeType === Node.ELEMENT_NODE) {
                     host.classList.add('video-ready');
                 }
+            };
+
+            safariRevealReleasers.push(applyReady);
+
+            const markReady = () => {
+                if (safariRevealLockActive && body.classList.contains('safari-reveal-lock')) {
+                    video.dataset.safariRevealPending = '1';
+                    return;
+                }
+                applyReady();
             };
 
             if (video.readyState >= 2) {
@@ -109,14 +131,28 @@
             video.addEventListener('canplay', markReady, { once: true });
             video.addEventListener('canplaythrough', markReady, { once: true });
             video.addEventListener('playing', markReady, { once: true });
-
-            // Safari can occasionally miss media readiness events during autoplay warmup.
-            window.setTimeout(markReady, 1800);
         };
 
         videos.forEach((video) => {
             setupVideoReveal(video);
         });
+
+        if (safariRevealLockActive) {
+            let released = false;
+            const releaseSafariRevealLock = () => {
+                if (released) return;
+                released = true;
+                safariRevealReleasers.forEach((release) => release());
+                body.classList.remove('safari-reveal-lock');
+            };
+
+            window.addEventListener('load', () => {
+                window.setTimeout(releaseSafariRevealLock, 120);
+            }, { once: true });
+
+            // Safety fallback in case Safari skips/defers load-media sequence.
+            window.setTimeout(releaseSafariRevealLock, 2000);
+        }
 
         const prepareVideo = (video, isPriority) => {
             video.muted = true;
@@ -308,6 +344,16 @@
                 menuLinks.forEach((link) => prefetchUrl(link.href));
             }, { timeout: 1800 });
         }
+
+        if ('requestIdleCallback' in window) {
+            window.requestIdleCallback(() => {
+                const sharedBackground = document.createElement('link');
+                sharedBackground.rel = 'prefetch';
+                sharedBackground.as = 'image';
+                sharedBackground.href = 'assets/fundo/FUNDO_V2.png';
+                document.head.appendChild(sharedBackground);
+            }, { timeout: 900 });
+        }
     };
 
     initNavigationPrefetch();
@@ -321,12 +367,6 @@
     const PAGE_SHELL_ID = 'page-slide-shell';
 
     let hasNavigationStarted = false;
-
-    const ua = navigator.userAgent;
-    const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/.test(ua);
-    if (isSafari) {
-        body.classList.add('safari-browser');
-    }
 
     const ensurePageShell = () => {
         const existing = document.getElementById(PAGE_SHELL_ID);
@@ -411,6 +451,12 @@
 
     const navigateWithTransition = (url) => {
         if (hasNavigationStarted) return;
+
+        if (isMobileLikeViewport()) {
+            window.location.href = url.href;
+            return;
+        }
+
         hasNavigationStarted = true;
         body.classList.add('transition-hold-videos');
 

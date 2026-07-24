@@ -188,6 +188,19 @@ body.transition-hold-videos .video-reveal-host .video-brown-overlay::after {
     opacity: 0.7;
 }
 
+body.safari-browser.safari-reveal-lock .cinematic-video {
+    opacity: 0 !important;
+}
+
+body.safari-browser.safari-reveal-lock .video-reveal-host .video-brown-overlay {
+    opacity: 1 !important;
+}
+
+body.safari-browser.safari-reveal-lock .video-reveal-host .video-brown-overlay::before,
+body.safari-browser.safari-reveal-lock .video-reveal-host .video-brown-overlay::after {
+    animation-play-state: paused !important;
+}
+
 @keyframes cinematic-grain-drift {
     0% {
         transform: translate3d(0, 0, 0) scale(1);
@@ -974,6 +987,10 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
     .vertical-grid {
         gap: 14px;
         justify-items: stretch;
+    }
+
+    body.page-commercials .vertical-grid {
+        display: none;
     }
 
     .vertical-item,
