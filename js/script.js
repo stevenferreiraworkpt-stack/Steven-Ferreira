@@ -188,7 +188,7 @@
                 video.setAttribute('playsinline', '');
             }
 
-            video.dataset.autoplayManaged = video.hasAttribute('autoplay') ? '1' : '0';
+            video.dataset.autoplayManaged = (video.hasAttribute('data-autoplay') || video.hasAttribute('autoplay')) ? '1' : '0';
 
             if (video.dataset.autoplayManaged === '0') {
                 if (!video.hasAttribute('preload')) {
@@ -207,8 +207,8 @@
             }
 
             if (isPostTransitionLoad) {
-                video.preload = 'auto';
-                if (typeof resumeSeconds === 'number' && Number.isFinite(resumeSeconds) && resumeSeconds > 0.05) {
+                video.preload = isPriority ? 'metadata' : 'none';
+                if (isPriority && typeof resumeSeconds === 'number' && Number.isFinite(resumeSeconds) && resumeSeconds > 0.05) {
                     video.addEventListener('loadedmetadata', () => {
                         try {
                             const duration = Number.isFinite(video.duration) ? video.duration : null;
@@ -224,7 +224,7 @@
                     video.load();
                     return;
                 }
-                safePlay(video);
+                if (isPriority) safePlay(video);
                 return;
             }
 
@@ -250,7 +250,9 @@
                             if (isConstrainedNetwork && entry.intersectionRatio > 0.72) {
                                 video.dataset.allowConstrainedPlay = '1';
                             }
-                            safePlay(video);
+                            if (entry.intersectionRatio > 0.35) {
+                                safePlay(video);
+                            }
                         } else {
                             video.pause();
                         }
@@ -258,15 +260,15 @@
                 },
                 {
                     root: null,
-                    rootMargin: isConstrainedNetwork ? '80px 0px' : '220px 0px',
-                    threshold: 0.01
+                    rootMargin: isConstrainedNetwork ? '40px 0px' : '120px 0px',
+                    threshold: 0.2
                 }
             );
         }
 
         videos.forEach((video, index) => {
             const inViewportNow = isElementInViewport(video, 0.08);
-            const eagerCount = isConstrainedNetwork ? 1 : 2;
+            const eagerCount = isConstrainedNetwork ? 0 : 1;
             const isPriority = isPostTransitionLoad ? inViewportNow : (inViewportNow || index < eagerCount);
             prepareVideo(video, isPriority);
 
@@ -372,22 +374,6 @@
             piece.addEventListener('touchstart', triggerPrefetch, { passive: true });
         });
 
-        const menuLinks = Array.from(document.querySelectorAll('header nav a[href]'));
-        if ('requestIdleCallback' in window && menuLinks.length) {
-            window.requestIdleCallback(() => {
-                menuLinks.forEach((link) => prefetchUrl(link.href));
-            }, { timeout: 1800 });
-        }
-
-        if ('requestIdleCallback' in window) {
-            window.requestIdleCallback(() => {
-                const sharedBackground = document.createElement('link');
-                sharedBackground.rel = 'prefetch';
-                sharedBackground.as = 'image';
-                sharedBackground.href = 'assets/fundo/FUNDO_V2.png';
-                document.head.appendChild(sharedBackground);
-            }, { timeout: 900 });
-        }
     };
 
     initNavigationPrefetch();

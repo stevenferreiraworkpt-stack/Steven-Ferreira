@@ -30,7 +30,6 @@
       window.history.replaceState({}, '', targetPath + window.location.search + window.location.hash);
     })();
     </script>
-    <link rel="preload" href="assets/fundo/FUNDO_V2.png" as="image" fetchpriority="high">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -68,7 +67,7 @@
 
 <div class="quadro">
 
-<video autoplay muted loop playsinline preload="none">
+<video data-autoplay="1" muted loop playsinline preload="none">
 <source src="assets/videos/FICCAO/BEAUTE_SITE.mp4" type="video/mp4">
 </video>
 
@@ -86,7 +85,7 @@
 
 <div class="quadro">
 
-<video autoplay muted loop playsinline preload="none">
+<video data-autoplay="1" muted loop playsinline preload="none">
 <source src="assets/videos/FICCAO/EMPATIA_SITE.mp4" type="video/mp4">
 </video>
 
