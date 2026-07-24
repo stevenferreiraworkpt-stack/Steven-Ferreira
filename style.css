@@ -994,16 +994,16 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
     }
 
     .item {
-        width: 95vw;
-        max-width: 95vw;
+        width: 100%;
+        max-width: 100%;
     }
 
     .quadro {
-        width: 95vw;
+        width: 100%;
     }
 
     .placa {
-        width: 95vw;
+        width: 100%;
         max-width: 100%;
     }
 
@@ -1030,7 +1030,7 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
         gap: 12px;
         aspect-ratio: auto;
         margin: 0 auto;
-        width: min(95vw, 980px);
+        width: min(100%, 980px);
     }
 
     .home-piece {
@@ -1072,7 +1072,7 @@ body.eye-cursor-enabled .zoom-item.zoom-active .quadro {
     .home-piece--b { order: 9; grid-column: 1 / -1; grid-row: 6; aspect-ratio: 795 / 203; }
 
     .about-mosaic {
-        width: min(95vw, 980px);
+        width: min(100%, 980px);
         grid-template-columns: repeat(3, minmax(0, 1fr));
         grid-template-rows: repeat(7, auto);
         aspect-ratio: auto;
