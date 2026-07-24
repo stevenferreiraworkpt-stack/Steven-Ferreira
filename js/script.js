@@ -151,7 +151,7 @@
             }, { once: true });
 
             // Safety fallback in case Safari skips/defers load-media sequence.
-            window.setTimeout(releaseSafariRevealLock, 2000);
+            window.setTimeout(releaseSafariRevealLock, 900);
         }
 
         const prepareVideo = (video, isPriority) => {
@@ -447,6 +447,37 @@
         if (anchor.target && anchor.target !== '_self') return false;
         if (anchor.hasAttribute('download')) return false;
         return true;
+    };
+
+    const bindMobileMenuLinks = () => {
+        const menuLinks = Array.from(document.querySelectorAll('header nav a[href]'));
+        menuLinks.forEach((anchor) => {
+            if (anchor.dataset.mobileNavBound === '1') return;
+            anchor.dataset.mobileNavBound = '1';
+
+            const goDirect = (event) => {
+                if (!isMobileLikeViewport()) return;
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+                if (!isEligibleLink(anchor)) return;
+
+                let url;
+                try {
+                    url = new URL(anchor.href, window.location.href);
+                } catch {
+                    return;
+                }
+
+                if (url.origin !== window.location.origin) return;
+                if (url.pathname === window.location.pathname && url.search === window.location.search) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                window.location.assign(url.href);
+            };
+
+            anchor.addEventListener('touchend', goDirect, { passive: false });
+            anchor.addEventListener('click', goDirect);
+        });
     };
 
     const navigateWithTransition = (url) => {
@@ -751,6 +782,7 @@
     };
 
     normalizeHomeFrameLinks();
+    bindMobileMenuLinks();
 
     const getPageOrder = (pathname) => MENU_PAGE_ORDER[toPageKey(pathname)] || null;
 
