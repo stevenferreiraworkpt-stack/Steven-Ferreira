@@ -335,7 +335,6 @@
             try {
                 const url = new URL(href, window.location.href);
                 if (url.origin !== window.location.origin) return;
-                if (!url.pathname.endsWith('.html')) return;
 
                 const key = url.href;
                 if (prefetched.has(key)) return;
@@ -373,7 +372,7 @@
             piece.addEventListener('touchstart', triggerPrefetch, { passive: true });
         });
 
-        const menuLinks = Array.from(document.querySelectorAll('header nav a[href$=".html"]'));
+        const menuLinks = Array.from(document.querySelectorAll('header nav a[href]'));
         if ('requestIdleCallback' in window && menuLinks.length) {
             window.requestIdleCallback(() => {
                 menuLinks.forEach((link) => prefetchUrl(link.href));
@@ -766,12 +765,12 @@
         const frame3 = document.querySelector('.home-piece--c');
 
         if (frame2) {
-            frame2.setAttribute('data-href', 'sobre.html');
+            frame2.setAttribute('data-href', '/about');
             frame2.setAttribute('aria-label', 'About');
         }
 
         if (frame3) {
-            frame3.setAttribute('data-href', 'publicidade.html');
+            frame3.setAttribute('data-href', '/commercials');
             frame3.setAttribute('aria-label', 'Commercials');
         }
     };
