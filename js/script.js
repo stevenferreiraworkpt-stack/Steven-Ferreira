@@ -11,6 +11,20 @@
         'ficcao.html': 4,
         'sobre.html': 5
     };
+    const PRETTY_PATH_BY_PAGE = {
+        'index.html': 'home',
+        'publicidade.html': 'commercials',
+        'videoclipes.html': 'music',
+        'ficcao.html': 'narrative',
+        'sobre.html': 'about'
+    };
+    const PAGE_BY_PRETTY_PATH = {
+        home: 'index.html',
+        commercials: 'publicidade.html',
+        music: 'videoclipes.html',
+        narrative: 'ficcao.html',
+        about: 'sobre.html'
+    };
 
     const body = document.body;
     if (!body) return;
@@ -449,36 +463,6 @@
         return true;
     };
 
-    const bindMobileMenuLinks = () => {
-        const menuLinks = Array.from(document.querySelectorAll('header nav a[href]'));
-        menuLinks.forEach((anchor) => {
-            if (anchor.dataset.mobileNavBound === '1') return;
-            anchor.dataset.mobileNavBound = '1';
-
-            const goDirect = (event) => {
-                if (!isMobileLikeViewport()) return;
-                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-                if (!isEligibleLink(anchor)) return;
-
-                let url;
-                try {
-                    url = new URL(anchor.href, window.location.href);
-                } catch {
-                    return;
-                }
-
-                if (url.origin !== window.location.origin) return;
-                if (url.pathname === window.location.pathname && url.search === window.location.search) return;
-
-                event.preventDefault();
-                event.stopPropagation();
-                window.location.assign(url.href);
-            };
-
-            anchor.addEventListener('touchend', goDirect, { passive: false });
-            anchor.addEventListener('click', goDirect);
-        });
-    };
 
     const navigateWithTransition = (url) => {
         if (hasNavigationStarted) return;
@@ -778,11 +762,33 @@
     const toPageKey = (pathname) => {
         const normalizedPath = normalizePathname(pathname);
         const segment = normalizedPath.split('/').pop() || '';
-        return segment || 'index.html';
+        if (!segment) return 'index.html';
+        if (PAGE_BY_PRETTY_PATH[segment]) return PAGE_BY_PRETTY_PATH[segment];
+        return segment;
     };
 
+    const applyPrettyUrl = () => {
+        if (window.location.protocol === 'file:') return;
+
+        const pageKey = toPageKey(window.location.pathname);
+        const prettySegment = PRETTY_PATH_BY_PAGE[pageKey];
+        if (!prettySegment) return;
+
+        const normalized = normalizePathname(window.location.pathname);
+        const currentSegment = normalized.split('/').pop() || '';
+        if (currentSegment === prettySegment) return;
+
+        const pageFilePattern = new RegExp(`/${pageKey.replace('.', '\\.')}$`, 'i');
+        const basePath = pageFilePattern.test(window.location.pathname)
+            ? window.location.pathname.replace(pageFilePattern, '/')
+            : (window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`);
+
+        const targetPath = `${basePath}${prettySegment}`.replace(/\/+/g, '/');
+        window.history.replaceState({}, '', `${targetPath}${window.location.search}${window.location.hash}`);
+    };
+
+    applyPrettyUrl();
     normalizeHomeFrameLinks();
-    bindMobileMenuLinks();
 
     const getPageOrder = (pathname) => MENU_PAGE_ORDER[toPageKey(pathname)] || null;
 
@@ -803,6 +809,11 @@
         const clickable = event.target.closest('a, .home-piece[data-href]');
         if (!clickable) return;
         if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+
+        // On mobile, keep native anchor navigation to avoid touch/click race conditions in Safari.
+        if (clickable.matches('a') && isMobileLikeViewport()) {
+            return;
+        }
 
         let url = null;
         if (clickable.matches('a')) {
