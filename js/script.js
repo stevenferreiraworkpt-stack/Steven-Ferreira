@@ -540,7 +540,8 @@
             pageShell.style.removeProperty('will-change');
             body.style.removeProperty('pointer-events');
 
-            history.pushState({ pjax: true }, '', url.href);
+            const prettyHistoryHref = buildPrettyUrl(url) || url.href;
+            history.pushState({ pjax: true }, '', prettyHistoryHref);
 
             initMediaPerformanceOptimizations();
             initNavigationPrefetch();
@@ -783,24 +784,41 @@
         return segment;
     };
 
+    const buildPrettyUrl = (inputUrl) => {
+        let resolved;
+        try {
+            resolved = inputUrl instanceof URL ? inputUrl : new URL(String(inputUrl), window.location.href);
+        } catch {
+            return null;
+        }
+
+        const pageKey = toPageKey(resolved.pathname);
+        const prettySegment = PRETTY_PATH_BY_PAGE[pageKey];
+        if (!prettySegment) return resolved.href;
+
+        const normalized = normalizePathname(resolved.pathname);
+        const currentSegment = normalized.split('/').pop() || '';
+        if (currentSegment === prettySegment) return resolved.href;
+
+        const pageFilePattern = new RegExp(`/${pageKey.replace('.', '\\.')}$`, 'i');
+        const basePath = pageFilePattern.test(resolved.pathname)
+            ? resolved.pathname.replace(pageFilePattern, '/')
+            : (resolved.pathname.endsWith('/') ? resolved.pathname : `${resolved.pathname}/`);
+
+        const targetPath = `${basePath}${prettySegment}`.replace(/\/+$/g, '').replace(/\/+/g, '/');
+        return `${resolved.origin}${targetPath}${resolved.search}${resolved.hash}`;
+    };
+
     const applyPrettyUrl = () => {
         if (window.location.protocol === 'file:') return;
 
-        const pageKey = toPageKey(window.location.pathname);
-        const prettySegment = PRETTY_PATH_BY_PAGE[pageKey];
-        if (!prettySegment) return;
+        const prettyHref = buildPrettyUrl(window.location.href);
+        if (!prettyHref) return;
 
-        const normalized = normalizePathname(window.location.pathname);
-        const currentSegment = normalized.split('/').pop() || '';
-        if (currentSegment === prettySegment) return;
+        const currentHref = `${window.location.origin}${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (prettyHref === currentHref) return;
 
-        const pageFilePattern = new RegExp(`/${pageKey.replace('.', '\\.')}$`, 'i');
-        const basePath = pageFilePattern.test(window.location.pathname)
-            ? window.location.pathname.replace(pageFilePattern, '/')
-            : (window.location.pathname.endsWith('/') ? window.location.pathname : `${window.location.pathname}/`);
-
-        const targetPath = `${basePath}${prettySegment}`.replace(/\/+/g, '/');
-        window.history.replaceState({}, '', `${targetPath}${window.location.search}${window.location.hash}`);
+        window.history.replaceState({}, '', prettyHref);
     };
 
     applyPrettyUrl();
