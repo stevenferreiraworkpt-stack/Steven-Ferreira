@@ -18,7 +18,7 @@
 }
 
 :root {
-    --layout-scale: 1;
+    --layout-scale: 0.8;
     --zoom-ease: cubic-bezier(0.22, 0.84, 0.28, 1);
 }
 
@@ -438,7 +438,7 @@ section:last-of-type {
 }
 
 body.safari-browser {
-    --layout-scale: 1;
+    --layout-scale: 0.8;
     /* Safari can show a horizontal seam with repeated backgrounds at exact 100% width. */
     background-size: calc(100% + 2px) auto;
     background-position: center top;
