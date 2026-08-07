@@ -594,7 +594,7 @@ body.safari-browser::before {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(14px, 1.9vw, 24px) var(--grid-col-gap);
     width: 100%;
-    max-width: calc((4 * var(--vertical-frame-max-width)) + (3 * var(--grid-col-gap)));
+    max-width: 100%;
     margin-inline: auto;
     justify-items: stretch;
     align-items: start;
@@ -602,7 +602,7 @@ body.safari-browser::before {
 
 .vertical-item {
     width: 100%;
-    max-width: var(--vertical-frame-max-width);
+    max-width: none;
     min-width: 0;
     display: flex;
     flex-direction: column;

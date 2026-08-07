@@ -11,7 +11,11 @@
 
 <script>
 (function () {
-  if (window.location.protocol === 'file:') return;
+  if (window.location.protocol === 'file:') {
+    var base = document.querySelector('base');
+    if (base) { base.setAttribute('href', './'); }
+    return;
+  }
 
   var prettyByPage = {
     'index.html': 'home',

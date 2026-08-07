@@ -77,14 +77,14 @@
             const raw = window.sessionStorage.getItem(PAGE_VIDEO_RESUME_STORAGE_KEY);
             if (raw) {
                 const parsed = JSON.parse(raw);
-                const samePath = parsed?.pathname === window.location.pathname;
-                const fresh = typeof parsed?.timestamp === 'number' && Date.now() - parsed.timestamp < PAGE_VIDEO_RESUME_TTL_MS;
-                if (samePath && fresh && parsed?.entries && typeof parsed.entries === 'object') {
+                const samePath = parsed && parsed.pathname === window.location.pathname;
+                const fresh = typeof parsed && parsed.timestamp === 'number' && Date.now() - parsed.timestamp < PAGE_VIDEO_RESUME_TTL_MS;
+                if (samePath && fresh && parsed && parsed.entries && typeof parsed.entries === 'object') {
                     resumeMap = parsed.entries;
                 }
                 window.sessionStorage.removeItem(PAGE_VIDEO_RESUME_STORAGE_KEY);
             }
-        } catch {
+        } catch (error) {
             window.sessionStorage.removeItem(PAGE_VIDEO_RESUME_STORAGE_KEY);
         }
 
@@ -158,7 +158,7 @@
                 let overlay = null;
                 try {
                     overlay = host.querySelector(':scope > .video-brown-overlay');
-                } catch {
+                } catch (error) {
                     // Safari versions with partial :scope support can throw here.
                     overlay = host.querySelector('.video-brown-overlay');
                 }
@@ -237,8 +237,8 @@
             video.autoplay = true;
 
             const sourceEl = video.querySelector('source[src]');
-            const rawSrc = sourceEl?.getAttribute('src') || video.getAttribute('src') || '';
-            const resumeSeconds = rawSrc ? resumeMap?.[rawSrc] : null;
+            const rawSrc = sourceEl ? sourceEl.getAttribute('src') : null || video.getAttribute('src') || '';
+            const resumeSeconds = rawSrc ? resumeMap && rawSrc ? resumeMap[rawSrc] : null : null;
             if (!getVideoAutoplayManaged(video)) {
                 if (!video.hasAttribute('preload')) {
                     video.preload = 'metadata';
@@ -265,7 +265,7 @@
                                 ? Math.min(Math.max(resumeSeconds, 0), Math.max(0, duration - 0.04))
                                 : resumeSeconds;
                             video.currentTime = clamped;
-                        } catch {
+                        } catch (error) {
                             // Ignore seek errors on resume.
                         }
                         safePlay(video);
@@ -392,7 +392,7 @@
                 let overlay = null;
                 try {
                     overlay = host.querySelector(':scope > .video-brown-overlay');
-                } catch {
+                } catch (error) {
                     overlay = host.querySelector('.video-brown-overlay');
                 }
                 if (!overlay) {
@@ -416,7 +416,7 @@
                 video.preload = 'metadata';
                 try {
                     video.load();
-                } catch {}
+                } catch (error) {}
             }
 
             const markReady = () => {
@@ -495,7 +495,7 @@
                 link.href = key;
                 link.as = 'document';
                 document.head.appendChild(link);
-            } catch {
+            } catch (error) {
                 // Ignore invalid URLs.
             }
         };
@@ -648,7 +648,7 @@
         window.sessionStorage.setItem(PAGE_TRANSITION_MODE_KEY, 'cinematic');
 
         const completePjaxSwap = (incomingDoc) => {
-            if (!incomingDoc?.body) {
+            if (!incomingDoc && incomingDoc.body) {
                 fallbackSlideNavigate();
                 return;
             }
@@ -684,7 +684,7 @@
                 releaseHeldVideos();
             }, 760);
 
-            const refreshedGlitchVideo = document.querySelector('source[src*="PUBLICIDADE_HORIZONTAL_11.mp4"]')?.parentElement;
+            const refreshedGlitchVideo = (function(){ const el = document.querySelector('source[src*=\"PUBLICIDADE_HORIZONTAL_11.mp4\"]'); return el ? el.parentElement : null; })();
             if (refreshedGlitchVideo instanceof HTMLVideoElement && refreshedGlitchVideo.dataset.glitchGuardBound !== '1') {
                 refreshedGlitchVideo.dataset.glitchGuardBound = '1';
                 const START_OFFSET = 0.12;
@@ -788,11 +788,11 @@
                         video.defaultMuted = true;
                         video.preload = 'auto';
                         video.play().catch(() => {});
-                    } catch {
+                    } catch (error) {
                         // Ignore individual media warmup errors.
                     }
                 });
-            } catch {
+            } catch (error) {
                 // Ignore cross-document access issues.
             }
         };
@@ -805,7 +805,7 @@
                 const entries = {};
                 incomingDoc.querySelectorAll('video').forEach((video) => {
                     const sourceEl = video.querySelector('source[src]');
-                    const src = sourceEl?.getAttribute('src') || video.getAttribute('src');
+                    const src = sourceEl ? sourceEl.getAttribute('src') : null || video.getAttribute('src');
                     if (!src) return;
                     if (!Number.isFinite(video.currentTime)) return;
                     entries[src] = video.currentTime;
@@ -819,7 +819,7 @@
                         entries
                     })
                 );
-            } catch {
+            } catch (error) {
                 // Ignore capture issues.
             }
         };
@@ -857,7 +857,7 @@
                 try {
                     const incomingDoc = incomingFrame.contentDocument;
                     completePjaxSwap(incomingDoc);
-                } catch {
+                } catch (error) {
                     fallbackSlideNavigate();
                 } finally {
                     clearLayer();
@@ -915,7 +915,7 @@
             try {
                 const linkKey = toPageKey(new URL(anchor.href, window.location.href).pathname);
                 anchor.classList.toggle('active', linkKey === currentKey);
-            } catch {
+            } catch (error) {
                 anchor.classList.remove('active');
             }
         });
@@ -933,7 +933,7 @@
         let resolved;
         try {
             resolved = inputUrl instanceof URL ? inputUrl : new URL(String(inputUrl), window.location.href);
-        } catch {
+        } catch (error) {
             return null;
         }
 
@@ -1017,7 +1017,7 @@
         let url;
         try {
             url = new URL(anchor.href, window.location.href);
-        } catch {
+        } catch (error) {
             return;
         }
 
@@ -1042,7 +1042,7 @@
     });
 
     // Skip first/last problematic frames on video 11 to avoid black flashes at loop boundaries.
-    const glitchVideo = document.querySelector('source[src*="PUBLICIDADE_HORIZONTAL_11.mp4"]')?.parentElement;
+    const glitchVideo = (function(){ const el = document.querySelector('source[src*=\"PUBLICIDADE_HORIZONTAL_11.mp4\"]'); return el ? el.parentElement : null; })();
     const setupGridGlowUnderlay = () => {
         const grids = Array.from(document.querySelectorAll('.grid, .vertical-grid, .home-puzzle'));
 
@@ -1155,7 +1155,7 @@
         window.open(mediaUrl, '_blank', 'noopener,noreferrer');
     };
 
-    const shouldOpenExternally = (item) => item?.getAttribute('data-open-external') === '1';
+    const shouldOpenExternally = (item) => item ? item.getAttribute('data-open-external') : null === '1';
 
     const getHorizontalGrid = () => document.querySelector('.grid:not(.vertical-grid)');
     const getHorizontalItems = () => {
@@ -1291,8 +1291,8 @@
     const resetAllInlinePlayers = () => {
         getHorizontalItems().forEach((item) => {
             const quadro = item.querySelector('.quadro');
-            const sourceVideo = quadro?.querySelector('video');
-            const vimeoPlayer = quadro?.querySelector('.vimeo-underframe');
+            const sourceVideo = quadro ? quadro.querySelector('video') : null;
+            const vimeoPlayer = quadro ? quadro.querySelector('.vimeo-underframe') : null;
             if (vimeoPlayer) vimeoPlayer.remove();
             if (sourceVideo) {
                 sourceVideo.classList.remove('hidden-video');
@@ -1302,8 +1302,8 @@
 
         getVerticalItems().forEach((item) => {
             const quadro = item.querySelector('.quadro-vertical');
-            const sourceVideo = quadro?.querySelector('video');
-            const vimeoPlayer = quadro?.querySelector('.vimeo-underframe');
+            const sourceVideo = quadro ? quadro.querySelector('video') : null;
+            const vimeoPlayer = quadro ? quadro.querySelector('.vimeo-underframe') : null;
             if (vimeoPlayer) vimeoPlayer.remove();
             if (sourceVideo) {
                 sourceVideo.classList.remove('hidden-video');
@@ -1351,7 +1351,7 @@
 
                 const item = frame.closest('.item');
                 const quadro = item?.querySelector('.quadro');
-                const sourceVideo = quadro?.querySelector('video');
+                const sourceVideo = quadro ? quadro.querySelector('video') : null;
                 if (!item || !quadro || !sourceVideo) return;
 
                 const mediaUrl = item.getAttribute('data-vimeo-url') || DEFAULT_VIMEO_URL;
@@ -1375,7 +1375,7 @@
 
                 const item = frame.closest('.vertical-item');
                 const quadro = item?.querySelector('.quadro-vertical');
-                const sourceVideo = quadro?.querySelector('video');
+                const sourceVideo = quadro ? quadro.querySelector('video') : null;
                 if (!item || !quadro || !sourceVideo) return;
 
                 const mediaUrl = item.getAttribute('data-vimeo-url') || DEFAULT_VIMEO_URL;
@@ -1534,8 +1534,8 @@
     const cleanupItemMedia = (item) => {
         if (!item) return;
         const quadro = item.querySelector('.quadro');
-        const sourceVideo = quadro?.querySelector('video');
-        const vimeoPlayer = quadro?.querySelector('.vimeo-underframe');
+        const sourceVideo = quadro ? quadro.querySelector('video') : null;
+        const vimeoPlayer = quadro ? quadro.querySelector('.vimeo-underframe') : null;
         if (vimeoPlayer) vimeoPlayer.remove();
         if (sourceVideo) {
             sourceVideo.classList.remove('hidden-video');
@@ -1779,7 +1779,7 @@
         setExclusiveActiveItem(item);
 
         const quadro = item.querySelector('.quadro');
-        const sourceVideo = quadro?.querySelector('video');
+        const sourceVideo = quadro ? quadro.querySelector('video') : null;
         if (!quadro || !sourceVideo) return;
 
         const previousItem = activeZoomItem;
