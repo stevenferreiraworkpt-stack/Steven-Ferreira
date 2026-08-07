@@ -423,6 +423,8 @@ body.zoom-returning .vertical-grid {
 }
 
 .vertical-grid {
+    width: 100%;
+    max-width: 100%;
     margin-top: clamp(28px, 3.2vw, 52px);
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: clamp(14px, 1.9vw, 24px) var(--grid-col-gap);
@@ -504,6 +506,12 @@ body.page-commercials .vertical-item {
 @media (max-width: 1100px) {
     .vertical-grid {
         grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (max-width: 900px) {
+    .vertical-grid {
+        grid-template-columns: 1fr;
     }
 }
 
