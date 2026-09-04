@@ -30,6 +30,7 @@
     if (!body) return;
     const ua = navigator.userAgent;
     const isSafari = /Safari/.test(ua) && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/.test(ua);
+    const isCommercialsPage = body.classList.contains('page-commercials');
     const isMobileLikeViewport = () => window.matchMedia('(max-width: 1080px), (max-aspect-ratio: 1 / 1), (pointer: coarse)').matches;
     const networkInfo = navigator.connection || navigator.mozConnection || navigator.webkitConnection || null;
     const isConstrainedNetwork = Boolean(
@@ -282,11 +283,11 @@
                 return;
             }
 
-            video.preload = isPriority ? 'metadata' : 'none';
+            video.preload = isCommercialsPage ? 'auto' : (isPriority ? 'metadata' : 'none');
+            if (isCommercialsPage) {
+                video.load();
+            }
             if (isPriority) {
-                if (video.preload === 'none') {
-                    video.load();
-                }
                 safePlay(video);
             }
         };
@@ -658,8 +659,9 @@
                 if (node.nodeType !== Node.ELEMENT_NODE) return true;
                     if (node.nodeName === 'SCRIPT') return false;
                     if (node.nodeName === 'HEADER') return false;
-                    return true;
-            body.classList.add('transition-hold-videos');
+                        return true;
+                    });
+                    body.classList.add('transition-hold-videos');
             if (isSafari) {
                 body.classList.add('safari-browser');
             }
