@@ -438,7 +438,7 @@
                 video.play().catch(() => {});
             };
 
-            const fallbackTimer = window.setTimeout(() => {
+            let fallbackTimer = window.setTimeout(() => {
                 markReady();
             }, 1800);
 
